@@ -1,20 +1,18 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Simulateur Cuisine Immersif</title>
+<title>HACCP Simulator V5</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
 background:#000;
+color:#fff;
 overflow:hidden;
-color:white;
 }
 
-/* ===== SCÈNES ===== */
 .scene{
 display:none;
 height:100vh;
@@ -24,9 +22,8 @@ background-size:cover;
 background-position:center;
 }
 
-.active{display:block;}
+.active{display:block}
 
-/* ===== UI ===== */
 .ui{
 position:fixed;
 top:10px;
@@ -36,13 +33,12 @@ z-index:50;
 
 button{margin:3px;padding:6px;cursor:pointer}
 
-/* ===== PANELS ===== */
 .panel{
 background:rgba(0,0,0,0.6);
 padding:10px;
-margin:8px;
+margin:6px;
 border-radius:8px;
-backdrop-filter:blur(5px);
+backdrop-filter:blur(4px);
 }
 
 .object{
@@ -54,17 +50,6 @@ border-radius:6px;
 cursor:pointer;
 }
 
-/* ===== INVENTAIRE ===== */
-#inv{
-position:fixed;
-bottom:10px;
-right:10px;
-background:rgba(0,0,0,0.7);
-padding:10px;
-border-radius:8px;
-}
-
-/* ===== MODAL ===== */
 .modal{
 display:none;
 position:fixed;
@@ -78,6 +63,15 @@ z-index:100;
 
 table{border-collapse:collapse;font-size:12px}
 td{border:1px solid #555;padding:4px;text-align:center}
+
+#inv{
+position:fixed;
+bottom:10px;
+right:10px;
+background:rgba(0,0,0,0.7);
+padding:10px;
+border-radius:8px;
+}
 </style>
 </head>
 
@@ -91,7 +85,7 @@ td{border:1px solid #555;padding:4px;text-align:center}
 <button onclick="validate()">Valider mission</button>
 </div>
 
-<div id="inv">Inventaire: vide</div>
+<div id="inv">Inventaire vide</div>
 
 <!-- ================= BUREAU ================= -->
 <div id="bureau" class="scene active"
@@ -100,15 +94,15 @@ style="background-image:url('https://images.unsplash.com/photo-1524758631624-e28
 <h2>Bureau — 17°C</h2>
 
 <div class="panel">
-🌡 Thermostat bureau :
+Thermostat :
 <input type="range" min="15" max="30" value="17" id="btemp">
 <span id="bval">17</span>°C
 </div>
 
-<div class="object" onclick="zoomThermo()">🌡 Thermomètre alcool (mur)</div>
+<div class="object" onclick="zoomThermo()">🌡 Thermomètre alcool</div>
 <div class="object" onclick="take('thermo')">🧪 Thermomètre manuel</div>
 
-<div class="panel">🔥 Radiateur + chaudière</div>
+<div class="panel">🔥 Chauffage / chaudière</div>
 <div class="panel">🌿 Basilic fenêtre</div>
 
 </div>
@@ -117,10 +111,10 @@ style="background-image:url('https://images.unsplash.com/photo-1524758631624-e28
 <div id="salle" class="scene"
 style="background-image:url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4');">
 
-<h2>Salle restaurant — 30°C</h2>
+<h2>Salle — 30°C</h2>
 
 <div class="panel">
-❄ Clim split :
+❄ Clim :
 <button onclick="setAC(24)">24</button>
 <button onclick="setAC(26)">26</button>
 <button onclick="setAC(28)">28</button>
@@ -135,7 +129,7 @@ style="background-image:url('https://images.unsplash.com/photo-1517248135467-4c7
 </div>
 
 <div class="panel">
-🌡 Température salle: <span id="roomtemp">30</span>°C
+Température: <span id="room">30</span>°C
 </div>
 
 </div>
@@ -144,57 +138,53 @@ style="background-image:url('https://images.unsplash.com/photo-1517248135467-4c7
 <div id="cuisine" class="scene"
 style="background-image:url('https://images.unsplash.com/photo-1556911220-e15b29be8c8f');">
 
-<h2>Cuisine professionnelle</h2>
+<h2>Cuisine HACCP</h2>
 
 <div class="object" onclick="openFridge()">❄ Chambre froide +</div>
 <div class="object" onclick="openTablet()">📱 Tablette HACCP</div>
 
 <div class="panel">
-🍳 Four thermostat :
+🍳 Four :
 <input type="range" min="1" max="10" value="6" id="oven">
 </div>
 
 <div class="panel">
-📦 Boîte bœuf bourguignon :
-<input id="datebox" placeholder="date">
+📦 Boîte bourguignon :
+<input id="date">
 </div>
 
-<div class="panel">🔪 Sonde à cœur</div>
-
 </div>
 
-<!-- ================= ZOOM THERMO ================= -->
+<!-- THERMO -->
 <div class="modal" id="thermo">
 <h3>Thermomètre alcool</h3>
 <canvas id="t" width="120" height="300"></canvas>
-<button onclick="closem()">Fermer</button>
+<button onclick="closeM()">Fermer</button>
 </div>
 
-<!-- ================= FRIGO ================= -->
+<!-- FRIGO -->
 <div class="modal" id="fridge">
-<h3>Chambre froide POSITIVE</h3>
+<h3>Chambre froide</h3>
 
-<div onclick="place(this,'slot1')" class="slot">Zone 1</div>
-<div onclick="place(this,'slot2')" class="slot">Zone 2</div>
-<div onclick="place(this,'slot3')" class="slot">Zone 3</div>
-
-<div>
 <div onclick="select('poisson')">🐟 Poisson</div>
-<div onclick="select('boeuf')">🥩 Boeuf bourguignon</div>
+<div onclick="select('boeuf')">🥩 Boeuf</div>
 <div onclick="select('fromage')">🧀 Fromage</div>
-</div>
+
+<hr>
+
+<div onclick="place(this,'s1')">Zone 1</div>
+<div onclick="place(this,'s2')">Zone 2</div>
+<div onclick="place(this,'s3')">Zone 3</div>
 
 </div>
 
-<!-- ================= TABLETTE ================= -->
+<!-- TABLETTE -->
 <div class="modal" id="tablet">
 <h3>Tablette HACCP</h3>
 <table id="tab"></table>
-<button onclick="graph()">Graphique</button>
-<canvas id="g" width="400" height="200"></canvas>
 </div>
 
-<!-- ================= PROF ================= -->
+<!-- PROF -->
 <div class="modal" id="prof">
 <h2>👨‍🏫 Professeur</h2>
 <p id="msg"></p>
@@ -204,8 +194,8 @@ style="background-image:url('https://images.unsplash.com/photo-1556911220-e15b29
 <script>
 
 let inv=[];
-let selected=null;
-let fridge={slot1:null,slot2:null,slot3:null};
+let sel=null;
+let fridge={s1:null,s2:null,s3:null};
 let ac=30;
 let fanv=0;
 
@@ -218,10 +208,6 @@ document.getElementById(id).classList.add('active');
 // INVENTAIRE
 function take(i){
 inv.push(i);
-updateInv();
-}
-
-function updateInv(){
 document.getElementById("inv").innerText="Inventaire: "+inv.join(",");
 }
 
@@ -236,16 +222,12 @@ c.fillRect(50,300-t*10,20,t*10);
 }
 
 // SALLE
-function setAC(v){ac=v;updateRoom();}
-function fan(v){
-fanv=v;
-document.getElementById("fanstate").innerText="V"+v;
-updateRoom();
-}
+function setAC(v){ac=v;update();}
+function fan(v){fanv=v;document.getElementById("fanstate").innerText="V"+v;update();}
 
-function updateRoom(){
-let t=ac-fanv*0.7;
-document.getElementById("roomtemp").innerText=t.toFixed(1);
+function update(){
+let t=ac-fanv*0.8;
+document.getElementById("room").innerText=t.toFixed(1);
 }
 
 // FRIGO
@@ -253,12 +235,12 @@ function openFridge(){
 document.getElementById("fridge").style.display="flex";
 }
 
-function select(i){selected=i;}
+function select(i){sel=i;}
 
 function place(el,slot){
-if(selected){
-fridge[slot]=selected;
-el.innerText=selected;
+if(sel){
+fridge[slot]=sel;
+el.innerText=sel;
 }
 }
 
@@ -267,26 +249,16 @@ function openTablet(){
 document.getElementById("tablet").style.display="flex";
 let t=document.getElementById("tab");
 t.innerHTML="";
+let jours=["Lun","Mar","Mer","Jeu","Ven"];
 for(let i=0;i<5;i++){
 let tr=document.createElement("tr");
 for(let j=0;j<9;j++){
 let td=document.createElement("td");
-td.innerText=(j===0?"Jour":(Math.random()*10+2).toFixed(1));
+td.innerText=(j===0?jours[i]:(Math.random()*10+2).toFixed(1));
 tr.appendChild(td);
 }
 t.appendChild(tr);
 }
-}
-
-// GRAPH
-function graph(){
-let c=document.getElementById("g").getContext("2d");
-c.clearRect(0,0,400,200);
-c.beginPath();
-for(let i=0;i<8;i++){
-c.lineTo(i*50,100-Math.random()*40);
-}
-c.stroke();
 }
 
 // VALIDATION
@@ -294,12 +266,12 @@ function validate(){
 
 let ok =
 inv.includes("thermo") &&
-fridge.slot1 && fridge.slot2 && fridge.slot3 &&
-document.getElementById("datebox").value!=="" &&
+fridge.s1 && fridge.s2 && fridge.s3 &&
+document.getElementById("date").value!=="" &&
 fanv>0;
 
 document.getElementById("msg").innerText=
-ok?"Mission réussie":"Mission incomplète";
+ok?"MISSION VALIDÉE":"MISSION INCOMPLÈTE";
 
 document.getElementById("prof").style.display="flex";
 }
