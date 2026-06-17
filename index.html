@@ -3,48 +3,35 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Simulation thermique PRO</title>
+<title>Simulation thermique immersive PRO</title>
 
 <style>
-body {margin:0; font-family:Arial; overflow:hidden;}
+body {margin:0; overflow:hidden; font-family:Arial;}
 
 #viewer {
 width:100%;
 height:600px;
-background:url("https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=1600");
+background:url("https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=2000");
 background-size:cover;
 background-repeat:repeat-x;
+background-position:0px center;
 cursor:grab;
 position:relative;
 }
 
 /* objets */
-.obj {
-position:absolute;
-cursor:pointer;
-}
+.obj {position:absolute; cursor:pointer;}
 
-/* sonde draggable */
-#sonde {
-width:40px;
-top:300px;
-left:50px;
-}
+#sonde {width:40px; top:300px; left:50px;}
+#glacon {width:40px; top:300px; left:120px;}
 
-/* glaçon */
-#glacon {
-width:40px;
-top:300px;
-left:120px;
-}
-
-/* four */
 #four {
 top:250px;
-left:400px;
+left:500px;
 padding:10px;
-background:#fff;
+background:white;
 border-radius:10px;
+cursor:pointer;
 }
 
 /* thermostat */
@@ -52,9 +39,21 @@ border-radius:10px;
 position:absolute;
 top:20px;
 right:20px;
-background:#fff;
+background:white;
 padding:10px;
 border-radius:50%;
+}
+
+/* boutons */
+#controls {
+position:absolute;
+top:20px;
+left:20px;
+}
+
+button {
+padding:8px;
+margin:3px;
 }
 
 /* bulle */
@@ -64,19 +63,22 @@ bottom:10px;
 left:10px;
 right:10px;
 background:#000c;
-color:#fff;
+color:white;
 padding:15px;
 border-radius:15px;
+max-height:120px;
+overflow:auto;
 }
 
-/* graphique */
+/* graph */
 #graph {
 position:absolute;
-bottom:80px;
+bottom:150px;
 left:10px;
 width:300px;
 height:150px;
 background:white;
+display:none;
 }
 
 </style>
@@ -94,24 +96,48 @@ background:white;
 
 <div id="thermo">20°C</div>
 
+<div id="controls">
+<button onclick="start()">▶️ Démarrer</button>
+<button onclick="stop()">⏸ Stop</button>
+<button onclick="showGraph()">📊 Graphique</button>
+</div>
+
 <canvas id="graph"></canvas>
 
-<div id="bulle">
-"Mesure la température et observe les effets du chauffage et du refroidissement."
-</div>
+<div id="bulle"></div>
 
 </div>
 
 <script>
 
+// TEXTE COMPLET
+const texte = `"Tu es en cuisine pédagogique.
+Tu dois mesurer les températures, utiliser la sonde et comprendre l'effet du chauffage et du refroidissement.
+
+1. Place la sonde
+2. Active le four
+3. Ajoute un glaçon
+4. Observe le graphique"`;
+
+// affichage bulle
+document.getElementById("bulle").innerText = texte;
+
 // VARIABLES
 let temperature = 20;
 let fourOn = false;
+let running = false;
 let data = [];
 
 // THERMOSTAT
 function updateThermo(){
 document.getElementById("thermo").innerHTML = temperature.toFixed(1)+"°C";
+}
+
+// CONTROLES
+function start(){running=true;}
+function stop(){running=false;}
+function showGraph(){
+document.getElementById("graph").style.display="block";
 }
 
 // FOUR
@@ -122,9 +148,8 @@ document.getElementById("four").innerHTML = fourOn ? "🔥 FOUR ON" : "❄️ FO
 
 // GLACON
 document.getElementById("glacon").onclick = ()=>{
-temperature -= 2;
+temperature -= 3;
 updateThermo();
-addData();
 };
 
 // SONDE DRAG
@@ -141,25 +166,26 @@ sonde.style.top = e.clientY+"px";
 }
 };
 
-// EVOLUTION TEMPERATURE
+// EVOLUTION TEMP (SEULEMENT SI START)
 setInterval(()=>{
-if(fourOn) temperature += 0.5;
+if(!running) return;
+
+if(fourOn) temperature += 0.4;
 else temperature -= 0.1;
 
 temperature = Math.max(0, temperature);
 updateThermo();
-addData();
+
+data.push(temperature);
+if(data.length>30) data.shift();
+
 drawGraph();
+
 },1000);
 
 // GRAPH
 let canvas = document.getElementById("graph");
 let ctx = canvas.getContext("2d");
-
-function addData(){
-data.push(temperature);
-if(data.length>30) data.shift();
-}
 
 function drawGraph(){
 ctx.clearRect(0,0,300,150);
@@ -174,10 +200,39 @@ else ctx.lineTo(x,y);
 ctx.stroke();
 }
 
-// INIT
+// DEPLACEMENT TYPE STREET VIEW
+let isDown=false, startX=0, pos=0;
+
+const viewer = document.getElementById("viewer");
+
+viewer.addEventListener("mousedown", e=>{
+isDown=true;
+startX=e.clientX;
+viewer.style.cursor="grabbing";
+});
+
+viewer.addEventListener("mouseup", ()=>{
+isDown=false;
+viewer.style.cursor="grab";
+});
+
+viewer.addEventListener("mousemove", e=>{
+if(!isDown) return;
+
+pos += (e.clientX - startX);
+
+// limites pour éviter bug
+pos = Math.max(-1000, Math.min(1000, pos));
+
+viewer.style.backgroundPosition = pos+"px center";
+
+startX=e.clientX;
+});
+
 updateThermo();
 
 </script>
 
 </body>
 </html>
+
