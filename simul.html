@@ -2,234 +2,304 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Simulation HACCP</title>
+<title>Simulation Restaurant V2</title>
 
 <style>
-body{
-margin:0;
-font-family:Arial;
-overflow:hidden;
-background:#000;
-}
+body{margin:0;font-family:Arial;background:#0f0f0f;color:white;}
+.scene{display:none;height:100vh;padding:20px;box-sizing:border-box;}
+.active{display:block;}
+.nav{position:fixed;top:10px;left:10px;z-index:50}
+button{margin:3px;padding:8px;cursor:pointer}
 
-/* ===== SCÈNES ===== */
-.scene{
-position:absolute;
-width:100%;
-height:100%;
+.panel{background:#222;padding:10px;margin:8px 0;border-radius:8px}
+.object{background:#333;padding:8px;margin:5px;display:inline-block;cursor:pointer}
+
+.modal{
+position:fixed;inset:0;
+background:rgba(0,0,0,0.92);
 display:none;
-color:white;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:100;
 }
 
-.active{display:block}
+.table{border-collapse:collapse;width:100%;font-size:12px}
+td,th{border:1px solid #666;padding:4px;text-align:center}
 
-/* fonds stylisés (pro, lisibles, non dépendants d’images) */
-#cuisine{background:linear-gradient(135deg,#3a3a3a,#1c1c1c);}
-#bureau{background:linear-gradient(135deg,#2e4b3f,#1a2b24);}
-#bar{background:linear-gradient(135deg,#5a3a2a,#2a1a14);}
-
-h1{
-text-align:center;
-margin-top:15px;
-}
-
-/* ===== OBJETS ===== */
-.obj{
-position:absolute;
-background:rgba(255,255,255,0.9);
-color:black;
-padding:8px;
-border-radius:6px;
-cursor:pointer;
-font-size:14px;
-user-select:none;
-}
-
-.obj:hover{
-background:yellow;
-}
-
-/* ===== NAV ===== */
-#nav{
+.inventory{
 position:fixed;
 bottom:10px;
-left:50%;
-transform:translateX(-50%);
+right:10px;
+background:#222;
+padding:10px;
+border-radius:8px;
 }
 
-button{
+.item{padding:5px;margin:5px;background:#444;cursor:grab}
+.fridgeSlot{
+border:2px dashed #666;
 padding:10px;
 margin:5px;
-cursor:pointer;
+min-height:40px;
 }
-
-/* ===== BULLE ===== */
-#bubble{
-position:fixed;
-top:10px;
-left:10px;
-width:420px;
-background:white;
-color:black;
-padding:12px;
-border-radius:10px;
-z-index:10;
-}
-
-#close{
-float:right;
-cursor:pointer;
-font-weight:bold;
-}
-
-/* ===== TABLETTE ===== */
-#tablet{
-position:fixed;
-top:15%;
-left:25%;
-width:50%;
-height:60%;
-background:white;
-color:black;
-display:none;
-padding:10px;
-overflow:auto;
-z-index:20;
-}
-
-/* GRAPH */
-canvas{
-border:1px solid #333;
-margin-top:10px;
-}
+.good{color:#0f0}
+.bad{color:#f55}
 </style>
 </head>
 
 <body>
 
-<!-- BULLE -->
-<div id="bubble">
-<span id="close" onclick="closeBubble()">✖</span>
-<p>
-Bonjour l'apprenti, tu es nouveau, pour te familiariser avec la cuisine tu vas être en charge des température. Tu devras aller dans le bureau et monter le chauffage à 21°C. Vérifie le thermomètre au mur. Prends la sonde en cuisine et relève les températures des chambres froides. Complète la tablette. Mets le four à thermostat 6. En salle, règle la clim à 26°C et le ventilateur à vitesse maximale.
-</p>
+<div class="nav">
+<button onclick="go('bureau')">Bureau</button>
+<button onclick="go('salle')">Salle</button>
+<button onclick="go('cuisine')">Cuisine</button>
+<button onclick="checkMission()">Valider mission</button>
 </div>
 
-<!-- CUISINE -->
-<div id="cuisine" class="scene active">
-<h1>CUISINE PROFESSIONNELLE</h1>
-
-<div class="obj" style="top:60%;left:20%" onclick="takeTemp()">Sonde température</div>
-<div class="obj" style="top:55%;left:70%" onclick="setOven()">Four (thermostat)</div>
-<div class="obj" style="top:25%;left:45%" onclick="openTablet()">Tablette HACCP</div>
+<!-- INVENTAIRE -->
+<div class="inventory">
+<b>Inventaire</b>
+<div id="inv"></div>
 </div>
 
 <!-- BUREAU -->
-<div id="bureau" class="scene">
-<h1>BUREAU</h1>
+<div id="bureau" class="scene active">
+<h2>Bureau (17°C)</h2>
 
-<div class="obj" style="top:55%;left:30%" onclick="setHeat()">Thermostat chauffage</div>
-<div class="obj" style="top:30%;left:65%" onclick="thermo()">Thermomètre alcool</div>
+<div class="panel">
+Température :
+<input type="range" min="15" max="30" value="17" id="bTemp">
+<span id="bVal">17</span>°C
 </div>
 
-<!-- BAR -->
-<div id="bar" class="scene">
-<h1>SALLE / BAR</h1>
+<div class="object" onclick="zoomThermo()">🌡 Thermomètre alcool</div>
+<div class="object" onclick="take('thermometer')">🧪 Prendre thermomètre</div>
+<div class="object" onclick="take('pen')">🖊 Stylo</div>
 
-<div class="obj" style="top:30%;left:40%" onclick="setClim()">Climatisation</div>
-<div class="obj" style="top:60%;left:60%" onclick="setFan()">Ventilateur</div>
+<div class="panel">🌿 Basilic devant fenêtre</div>
+<div class="panel">🔥 Radiateur + chaudière</div>
+</div>
+
+<!-- SALLE -->
+<div id="salle" class="scene">
+<h2>Salle (30°C)</h2>
+
+<div class="panel">
+Clim :
+<input type="range" min="18" max="30" value="30" id="ac">
+<span id="acVal">30</span>°C
+</div>
+
+<div class="panel">
+Ventilateur :
+<select id="fan">
+<option>Arrêt</option>
+<option>V1</option>
+<option>V2</option>
+<option>V3</option>
+</select>
+</div>
+
+<div class="panel">Salle bondée 🔥</div>
+</div>
+
+<!-- CUISINE -->
+<div id="cuisine" class="scene">
+<h2>Cuisine pro</h2>
+
+<div class="object" onclick="openFridge()">❄ Chambre froide positive</div>
+<div class="object" onclick="openTablet()">📱 Tablette</div>
+
+<div class="panel">
+Four thermostat :
+<input type="range" min="1" max="10" value="6" id="oven">
+<span id="ovenVal">6</span>
+</div>
+
+<div class="panel">
+📦 Boîte BOEUF BOURGUIGNON :
+<input id="dateBox" placeholder="écrire date">
+</div>
+
+<div class="panel">🔪 Sonde à cœur disponible</div>
+</div>
+
+<!-- ZOOM THERMOMÈTRE -->
+<div class="modal" id="zoom">
+<h3>Lecture thermomètre</h3>
+<canvas id="thermo" width="120" height="300"></canvas>
+<p>Ménisque (niveau réel simulé)</p>
+<button onclick="closeModal()">Fermer</button>
+</div>
+
+<!-- FRIGO -->
+<div class="modal" id="fridge">
+<h3>Chambre froide positive</h3>
+
+<div class="fridgeSlot" ondrop="drop(event,'slot1')" ondragover="allow(event)">
+Slot 1</div>
+<div class="fridgeSlot" ondrop="drop(event,'slot2')" ondragover="allow(event)">
+Slot 2</div>
+<div class="fridgeSlot" ondrop="drop(event,'slot3')" ondragover="allow(event)">
+Slot 3</div>
+
+<div class="panel">
+<div class="item" draggable="true" ondragstart="drag(event)" id="poisson">🐟 Poisson</div>
+<div class="item" draggable="true" ondragstart="drag(event)" id="boeuf">🥩 Boeuf bourguignon (boîte)</div>
+<div class="item" draggable="true" ondragstart="drag(event)" id="fromage">🧀 Fromage</div>
+</div>
+
+<button onclick="closeModal()">Fermer</button>
 </div>
 
 <!-- TABLETTE -->
-<div id="tablet">
-<h3>Suivi des températures</h3>
+<div class="modal" id="tablet">
+<h3>Tablette suivi températures</h3>
 
-<table border="1" width="100%">
-<tr><th>Jour</th><th>CF+</th><th>CF-</th></tr>
-<tr><td>Lundi</td><td>4</td><td>-18</td></tr>
-<tr><td>Mardi</td><td>3</td><td>-17</td></tr>
-<tr><td>Mercredi</td><td>5</td><td>-19</td></tr>
-<tr><td>Jeudi</td><td>4</td><td>-18</td></tr>
-<tr><td>Vendredi</td><td id="cfp">?</td><td id="cfn">?</td></tr>
-</table>
+<table class="table" id="table"></table>
 
-<button onclick="graph()">Afficher graphique</button>
-<canvas id="canvas" width="400" height="200"></canvas>
+<button onclick="drawChart()">Graphique</button>
+<canvas id="chart" width="400" height="200"></canvas>
 
-<br><button onclick="closeTablet()">Fermer</button>
+<button onclick="closeModal()">Fermer</button>
 </div>
 
-<!-- NAV -->
-<div id="nav">
-<button onclick="go('cuisine')">Cuisine</button>
-<button onclick="go('bureau')">Bureau</button>
-<button onclick="go('bar')">Salle</button>
+<!-- PROF -->
+<div class="modal" id="prof">
+<h2>👨‍🏫 Professeur</h2>
+<p id="msg">Analyse des tâches...</p>
+<button onclick="alert('Page suivante débloquée')">Page suivante</button>
 </div>
 
 <script>
 
-/* NAV */
+let inventory=[];
+let fridge={slot1:null,slot2:null,slot3:null};
+let data=[18,19,20,21,20,19,18,19];
+
 function go(id){
 document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));
 document.getElementById(id).classList.add('active');
 }
 
-/* BULLE */
-function closeBubble(){
-document.getElementById("bubble").style.display="none";
+function take(item){
+inventory.push(item);
+updateInv();
 }
 
-/* ACTIONS */
-function setHeat(){
-let v=prompt("Régler à 21°C ?");
-alert(v==21 ? "✔ OK" : "❌ mauvais réglage");
+function updateInv(){
+document.getElementById("inv").innerHTML=
+inventory.map(i=>`<div>${i}</div>`).join("");
 }
 
-function thermo(){
-alert("Lecture : 17°C");
+function zoomThermo(){
+document.getElementById("zoom").style.display="flex";
+let c=document.getElementById("thermo");
+let ctx=c.getContext("2d");
+ctx.clearRect(0,0,120,300);
+
+let temp=parseInt(document.getElementById("bTemp").value);
+
+ctx.fillStyle="red";
+ctx.fillRect(50,300-temp*10,20,temp*10);
+
+ctx.fillStyle="black";
+ctx.fillText(temp+"°C",10,20);
 }
 
-function setOven(){
-alert("Four réglé thermostat 6");
+function allow(ev){ev.preventDefault();}
+
+function drag(ev){ev.dataTransfer.setData("id",ev.target.id);}
+
+function drop(ev,slot){
+ev.preventDefault();
+let id=ev.dataTransfer.getData("id");
+fridge[slot]=id;
+ev.target.innerHTML="✔ "+id;
+checkFridge();
 }
 
-function setClim(){
-alert("Clim réglée à 26°C");
+function checkFridge(){
+if(fridge.slot1 && fridge.slot2 && fridge.slot3){
+if(fridge.slot2==="boeuf") alert("⚠ Boeuf mal placé !");
+}
 }
 
-function setFan(){
-alert("Ventilateur vitesse max");
-}
-
-function takeTemp(){
-document.getElementById("cfp").innerText="4";
-document.getElementById("cfn").innerText="-18";
-alert("Températures enregistrées");
+function openFridge(){
+document.getElementById("fridge").style.display="flex";
 }
 
 function openTablet(){
-document.getElementById("tablet").style.display="block";
+document.getElementById("tablet").style.display="flex";
+
+let t=document.getElementById("table");
+t.innerHTML="";
+
+let days=["Lun","Mar","Mer","Jeu","Ven"];
+
+for(let i=0;i<5;i++){
+let tr=document.createElement("tr");
+for(let j=0;j<9;j++){
+let td=document.createElement("td");
+td.textContent =
+j===0?days[i]:
+j===8?"Resp":
+(Math.random()*10+2).toFixed(1);
+tr.appendChild(td);
+}
+t.appendChild(tr);
+}
 }
 
-function closeTablet(){
-document.getElementById("tablet").style.display="none";
-}
-
-/* GRAPH */
-function graph(){
-let c=document.getElementById("canvas");
+function drawChart(){
+let c=document.getElementById("chart");
 let ctx=c.getContext("2d");
-
 ctx.clearRect(0,0,400,200);
 
 ctx.beginPath();
-ctx.moveTo(0,150);
-ctx.lineTo(100,140);
-ctx.lineTo(200,130);
-ctx.lineTo(300,140);
-ctx.strokeStyle="red";
+data.forEach((v,i)=>{
+ctx.lineTo(i*50,200-v*5);
+});
+ctx.stroke();
+
+ctx.beginPath();
+data.map(v=>v-2).forEach((v,i)=>{
+ctx.lineTo(i*50,200-v*5);
+});
 ctx.stroke();
 }
+
+function closeModal(){
+document.querySelectorAll(".modal").forEach(m=>m.style.display="none");
+}
+
+function checkMission(){
+
+let ok =
+inventory.includes("thermometer") &&
+inventory.includes("pen") &&
+fridge.slot1 &&
+fridge.slot2 &&
+fridge.slot3 &&
+document.getElementById("dateBox").value!=="";
+
+let msg=document.getElementById("msg");
+
+if(ok){
+msg.innerHTML="✔ Mission réussie. Températures maîtrisées.";
+document.getElementById("prof").style.display="flex";
+}else{
+alert("Mission incomplète");
+}
+}
+
+// UI sync
+setInterval(()=>{
+document.getElementById("bVal").innerText=document.getElementById("bTemp").value;
+document.getElementById("acVal").innerText=document.getElementById("ac").value;
+document.getElementById("ovenVal").innerText=document.getElementById("oven").value;
+},200);
 
 </script>
 
