@@ -3,7 +3,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Simulation thermique immersive PRO</title>
+<title>Simulation HACCP immersive</title>
 
 <style>
 body {margin:0; overflow:hidden; font-family:Arial;}
@@ -11,7 +11,6 @@ body {margin:0; overflow:hidden; font-family:Arial;}
 #viewer {
 width:100%;
 height:600px;
-background:url("https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=2000");
 background-size:cover;
 background-repeat:repeat-x;
 background-position:0px center;
@@ -19,22 +18,14 @@ cursor:grab;
 position:relative;
 }
 
-/* objets */
-.obj {position:absolute; cursor:pointer;}
-
-#sonde {width:40px; top:300px; left:50px;}
-#glacon {width:40px; top:300px; left:120px;}
-
-#four {
-top:250px;
-left:500px;
+.nav {
+position:absolute;
 padding:10px;
 background:white;
 border-radius:10px;
 cursor:pointer;
 }
 
-/* thermostat */
 #thermo {
 position:absolute;
 top:20px;
@@ -44,19 +35,6 @@ padding:10px;
 border-radius:50%;
 }
 
-/* boutons */
-#controls {
-position:absolute;
-top:20px;
-left:20px;
-}
-
-button {
-padding:8px;
-margin:3px;
-}
-
-/* bulle */
 #bulle {
 position:absolute;
 bottom:10px;
@@ -66,19 +44,9 @@ background:#000c;
 color:white;
 padding:15px;
 border-radius:15px;
-max-height:120px;
+max-height:160px;
 overflow:auto;
-}
-
-/* graph */
-#graph {
-position:absolute;
-bottom:150px;
-left:10px;
-width:300px;
-height:150px;
-background:white;
-display:none;
+font-size:14px;
 }
 
 </style>
@@ -87,149 +55,148 @@ display:none;
 
 <body>
 
-<div id="viewer">
-
-<img id="sonde" class="obj" src="https://cdn-icons-png.flaticon.com/512/481/481473.png">
-<img id="glacon" class="obj" src="https://cdn-icons-png.flaticon.com/512/2933/2933823.png">
-
-<div id="four">🔥 FOUR OFF</div>
-
+<div id="viewer"></div>
 <div id="thermo">20°C</div>
-
-<div id="controls">
-<button onclick="start()">▶️ Démarrer</button>
-<button onclick="stop()">⏸ Stop</button>
-<button onclick="showGraph()">📊 Graphique</button>
-</div>
-
-<canvas id="graph"></canvas>
-
 <div id="bulle"></div>
-
-</div>
 
 <script>
 
-// TEXTE COMPLET
-const texte = `"Tu es en cuisine pédagogique.
-Tu dois mesurer les températures, utiliser la sonde et comprendre l'effet du chauffage et du refroidissement.
+// 👉 TON TEXTE EXACT (NON MODIFIÉ)
+const scriptText = `Bonjour l'apprenti, tu es nouveau, pour te familiariser avec la cuisine tu vas être en charge des température.
+Tu devras aller dans le bureau et monter le chauffage à 21°C car Paul le responsable dit qu'il y fait trop froid, j'ai un thermomètre au mur à côté de la fenêtre tu pourras vérifier si Paul a raison.
+Prends le thermomètre manuel sur mon bureau et viens faire les relevés de températures des chambres froides, n'oublie pas de compléter la fiche de suivi sur la tablette.
+En passant tu mettras le four à préchauffer sur thermostat 6.
+Ensuite tu iras en salle il y a déjà du monde et il commence à faire chaud tu allumeras la clim à 26°C et puis tu mettras le ventilo sur grande vitesse.
+Bon eh bien tu as du travail, ne traîne pas la journée s'annonce chargée, et puis bien venu chez nous !!!`;
 
-1. Place la sonde
-2. Active le four
-3. Ajoute un glaçon
-4. Observe le graphique"`;
+// affichage texte complet
+document.getElementById("bulle").innerText = scriptText;
 
-// affichage bulle
-document.getElementById("bulle").innerText = texte;
-
-// VARIABLES
-let temperature = 20;
-let fourOn = false;
-let running = false;
-let data = [];
-
-// THERMOSTAT
-function updateThermo(){
-document.getElementById("thermo").innerHTML = temperature.toFixed(1)+"°C";
-}
-
-// CONTROLES
-function start(){running=true;}
-function stop(){running=false;}
-function showGraph(){
-document.getElementById("graph").style.display="block";
-}
-
-// FOUR
-document.getElementById("four").onclick = ()=>{
-fourOn = !fourOn;
-document.getElementById("four").innerHTML = fourOn ? "🔥 FOUR ON" : "❄️ FOUR OFF";
+// SCENES
+const scenes = {
+cuisine: "https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=2000",
+bureau: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2000",
+bar: "https://images.unsplash.com/photo-1578474846511-04ba529f0b88?q=80&w=2000"
 };
 
-// GLACON
-document.getElementById("glacon").onclick = ()=>{
-temperature -= 3;
-updateThermo();
-};
-
-// SONDE DRAG
-let sonde = document.getElementById("sonde");
-let dragging=false;
-
-sonde.onmousedown = ()=>dragging=true;
-document.onmouseup = ()=>dragging=false;
-
-document.onmousemove = (e)=>{
-if(dragging){
-sonde.style.left = e.clientX+"px";
-sonde.style.top = e.clientY+"px";
-}
-};
-
-// EVOLUTION TEMP (SEULEMENT SI START)
-setInterval(()=>{
-if(!running) return;
-
-if(fourOn) temperature += 0.4;
-else temperature -= 0.1;
-
-temperature = Math.max(0, temperature);
-updateThermo();
-
-data.push(temperature);
-if(data.length>30) data.shift();
-
-drawGraph();
-
-},1000);
-
-// GRAPH
-let canvas = document.getElementById("graph");
-let ctx = canvas.getContext("2d");
-
-function drawGraph(){
-ctx.clearRect(0,0,300,150);
-
-ctx.beginPath();
-data.forEach((t,i)=>{
-let x = i*10;
-let y = 150 - t*3;
-if(i===0) ctx.moveTo(x,y);
-else ctx.lineTo(x,y);
-});
-ctx.stroke();
-}
-
-// DEPLACEMENT TYPE STREET VIEW
-let isDown=false, startX=0, pos=0;
+let current = "cuisine";
+let pos = 0;
 
 const viewer = document.getElementById("viewer");
+
+function loadScene(scene){
+
+current = scene;
+viewer.style.backgroundImage = `url(${scenes[scene]})`;
+viewer.innerHTML = "";
+
+// NAVIGATION
+if(scene==="cuisine"){
+addNav("➡ Bureau", "10%", "70%", ()=>loadScene("bureau"));
+addNav("➡ Salle", "80%", "70%", ()=>loadScene("bar"));
+addKitchen();
+}
+
+if(scene==="bureau"){
+addNav("➡ Cuisine", "50%", "70%", ()=>loadScene("cuisine"));
+addBureau();
+}
+
+if(scene==="bar"){
+addNav("➡ Cuisine", "50%", "70%", ()=>loadScene("cuisine"));
+addBar();
+}
+
+}
+
+// NAV
+function addNav(text,x,y,action){
+let el = document.createElement("div");
+el.className="nav";
+el.style.left=x;
+el.style.top=y;
+el.innerHTML=text;
+el.onclick=action;
+viewer.appendChild(el);
+}
+
+// CUISINE
+function addKitchen(){
+
+let four = document.createElement("div");
+four.className="nav";
+four.style.left="500px";
+four.style.top="300px";
+four.innerHTML="🔥 Four OFF";
+four.onclick=()=>{
+four.innerHTML = four.innerHTML.includes("OFF") ? "🔥 Four ON (thermostat 6)" : "🔥 Four OFF";
+};
+viewer.appendChild(four);
+
+}
+
+// BUREAU
+function addBureau(){
+
+let chauffage = document.createElement("div");
+chauffage.className="nav";
+chauffage.style.left="300px";
+chauffage.style.top="300px";
+chauffage.innerHTML="🔥 Chauffage 20°C";
+chauffage.onclick=()=>{
+chauffage.innerHTML="🔥 Chauffage 21°C";
+document.getElementById("thermo").innerHTML="21°C";
+};
+viewer.appendChild(chauffage);
+
+}
+
+// SALLE / BAR
+function addBar(){
+
+let clim = document.createElement("div");
+clim.className="nav";
+clim.style.left="300px";
+clim.style.top="300px";
+clim.innerHTML="❄️ Clim OFF";
+clim.onclick=()=>{
+clim.innerHTML="❄️ Clim 26°C";
+};
+viewer.appendChild(clim);
+
+let ventilo = document.createElement("div");
+ventilo.className="nav";
+ventilo.style.left="500px";
+ventilo.style.top="350px";
+ventilo.innerHTML="🌀 Ventilo OFF";
+ventilo.onclick=()=>{
+ventilo.innerHTML="🌀 Ventilo MAX";
+};
+viewer.appendChild(ventilo);
+
+}
+
+// DEPLACEMENT
+let isDown=false, startX=0;
 
 viewer.addEventListener("mousedown", e=>{
 isDown=true;
 startX=e.clientX;
-viewer.style.cursor="grabbing";
 });
 
-viewer.addEventListener("mouseup", ()=>{
-isDown=false;
-viewer.style.cursor="grab";
-});
+viewer.addEventListener("mouseup", ()=>isDown=false);
 
 viewer.addEventListener("mousemove", e=>{
 if(!isDown) return;
 
 pos += (e.clientX - startX);
-
-// limites pour éviter bug
 pos = Math.max(-1000, Math.min(1000, pos));
 
 viewer.style.backgroundPosition = pos+"px center";
-
 startX=e.clientX;
 });
 
-updateThermo();
+loadScene("cuisine");
 
 </script>
 
