@@ -1,16 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>HACCP Simulator V5</title>
+<title>Simulateur Cuisine Cartoon V6</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
 background:#000;
-color:#fff;
 overflow:hidden;
+color:white;
 }
 
 .scene{
@@ -31,24 +32,15 @@ left:10px;
 z-index:50;
 }
 
-button{margin:3px;padding:6px;cursor:pointer}
-
-.panel{
-background:rgba(0,0,0,0.6);
-padding:10px;
-margin:6px;
-border-radius:8px;
-backdrop-filter:blur(4px);
-}
+button{margin:3px;padding:6px}
 
 .object{
-display:inline-block;
-background:rgba(255,255,255,0.1);
-padding:8px;
-margin:5px;
-border-radius:6px;
+position:absolute;
 cursor:pointer;
+transition:transform 0.2s;
 }
+
+.object:hover{transform:scale(1.1)}
 
 .modal{
 display:none;
@@ -60,220 +52,91 @@ align-items:center;
 flex-direction:column;
 z-index:100;
 }
-
-table{border-collapse:collapse;font-size:12px}
-td{border:1px solid #555;padding:4px;text-align:center}
-
-#inv{
-position:fixed;
-bottom:10px;
-right:10px;
-background:rgba(0,0,0,0.7);
-padding:10px;
-border-radius:8px;
-}
 </style>
 </head>
 
 <body>
 
-<!-- NAV -->
 <div class="ui">
 <button onclick="go('bureau')">Bureau</button>
 <button onclick="go('salle')">Salle</button>
 <button onclick="go('cuisine')">Cuisine</button>
-<button onclick="validate()">Valider mission</button>
 </div>
-
-<div id="inv">Inventaire vide</div>
 
 <!-- ================= BUREAU ================= -->
 <div id="bureau" class="scene active"
-style="background-image:url('https://images.unsplash.com/photo-1524758631624-e2822e304c36');">
+style="background-image:url('https://i.imgur.com/4QfKuz1.jpg');">
 
-<h2>Bureau — 17°C</h2>
+<!-- ORDINATEUR -->
+<img src="https://cdn-icons-png.flaticon.com/512/1055/1055687.png"
+class="object" style="width:90px;left:300px;top:300px">
 
-<div class="panel">
-Thermostat :
-<input type="range" min="15" max="30" value="17" id="btemp">
-<span id="bval">17</span>°C
-</div>
+<!-- THERMOMÈTRE -->
+<img src="https://cdn-icons-png.flaticon.com/512/1684/1684375.png"
+class="object" onclick="zoomThermo()" style="width:70px;left:100px;top:200px">
 
-<div class="object" onclick="zoomThermo()">🌡 Thermomètre alcool</div>
-<div class="object" onclick="take('thermo')">🧪 Thermomètre manuel</div>
+<!-- BASILIC -->
+<img src="https://cdn-icons-png.flaticon.com/512/2909/2909765.png"
+class="object" style="width:80px;left:500px;top:350px">
 
-<div class="panel">🔥 Chauffage / chaudière</div>
-<div class="panel">🌿 Basilic fenêtre</div>
-
+<h2>Bureau</h2>
 </div>
 
 <!-- ================= SALLE ================= -->
 <div id="salle" class="scene"
-style="background-image:url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4');">
+style="background-image:url('https://i.imgur.com/8Qf3Z3S.jpg');">
 
-<h2>Salle — 30°C</h2>
+<!-- CLIM -->
+<img src="https://cdn-icons-png.flaticon.com/512/1684/1684375.png"
+style="width:80px;position:absolute;left:200px;top:200px">
 
-<div class="panel">
-❄ Clim :
-<button onclick="setAC(24)">24</button>
-<button onclick="setAC(26)">26</button>
-<button onclick="setAC(28)">28</button>
-</div>
+<!-- VENTILATEUR -->
+<img src="https://cdn-icons-png.flaticon.com/512/1046/1046857.png"
+style="width:100px;position:absolute;left:400px;top:250px">
 
-<div class="panel">
-🪭 Ventilateur :
-<button onclick="fan(1)">V1</button>
-<button onclick="fan(2)">V2</button>
-<button onclick="fan(3)">V3</button>
-<div id="fanstate">Arrêt</div>
-</div>
-
-<div class="panel">
-Température: <span id="room">30</span>°C
-</div>
-
+<h2>Salle restaurant</h2>
 </div>
 
 <!-- ================= CUISINE ================= -->
 <div id="cuisine" class="scene"
-style="background-image:url('https://images.unsplash.com/photo-1556911220-e15b29be8c8f');">
-
-<h2>Cuisine HACCP</h2>
-
-<div class="object" onclick="openFridge()">❄ Chambre froide +</div>
-<div class="object" onclick="openTablet()">📱 Tablette HACCP</div>
-
-<div class="panel">
-🍳 Four :
-<input type="range" min="1" max="10" value="6" id="oven">
-</div>
-
-<div class="panel">
-📦 Boîte bourguignon :
-<input id="date">
-</div>
-
-</div>
-
-<!-- THERMO -->
-<div class="modal" id="thermo">
-<h3>Thermomètre alcool</h3>
-<canvas id="t" width="120" height="300"></canvas>
-<button onclick="closeM()">Fermer</button>
-</div>
+style="background-image:url('https://i.imgur.com/3ZQ3Z8l.jpg');">
 
 <!-- FRIGO -->
-<div class="modal" id="fridge">
-<h3>Chambre froide</h3>
+<img src="https://cdn-icons-png.flaticon.com/512/1046/1046857.png"
+style="width:120px;position:absolute;left:150px;top:250px">
 
-<div onclick="select('poisson')">🐟 Poisson</div>
-<div onclick="select('boeuf')">🥩 Boeuf</div>
-<div onclick="select('fromage')">🧀 Fromage</div>
-
-<hr>
-
-<div onclick="place(this,'s1')">Zone 1</div>
-<div onclick="place(this,'s2')">Zone 2</div>
-<div onclick="place(this,'s3')">Zone 3</div>
-
-</div>
+<!-- FOUR -->
+<img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png"
+style="width:120px;position:absolute;left:350px;top:250px">
 
 <!-- TABLETTE -->
-<div class="modal" id="tablet">
-<h3>Tablette HACCP</h3>
-<table id="tab"></table>
+<img src="https://cdn-icons-png.flaticon.com/512/1055/1055687.png"
+style="width:90px;position:absolute;left:550px;top:200px">
+
+<h2>Cuisine professionnelle</h2>
 </div>
 
-<!-- PROF -->
-<div class="modal" id="prof">
-<h2>👨‍🏫 Professeur</h2>
-<p id="msg"></p>
-<button>Page suivante</button>
+<!-- ================= ZOOM THERMO ================= -->
+<div class="modal" id="zoom">
+<h3>Thermomètre alcool</h3>
+<img src="https://cdn-icons-png.flaticon.com/512/1684/1684375.png"
+style="width:200px">
+<button onclick="closeM()">Fermer</button>
 </div>
 
 <script>
 
-let inv=[];
-let sel=null;
-let fridge={s1:null,s2:null,s3:null};
-let ac=30;
-let fanv=0;
-
-// NAV
 function go(id){
 document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));
 document.getElementById(id).classList.add('active');
 }
 
-// INVENTAIRE
-function take(i){
-inv.push(i);
-document.getElementById("inv").innerText="Inventaire: "+inv.join(",");
-}
-
-// THERMO
 function zoomThermo(){
-document.getElementById("thermo").style.display="flex";
-let c=document.getElementById("t").getContext("2d");
-c.clearRect(0,0,120,300);
-let t=document.getElementById("btemp").value;
-c.fillStyle="red";
-c.fillRect(50,300-t*10,20,t*10);
+document.getElementById("zoom").style.display="flex";
 }
 
-// SALLE
-function setAC(v){ac=v;update();}
-function fan(v){fanv=v;document.getElementById("fanstate").innerText="V"+v;update();}
-
-function update(){
-let t=ac-fanv*0.8;
-document.getElementById("room").innerText=t.toFixed(1);
-}
-
-// FRIGO
-function openFridge(){
-document.getElementById("fridge").style.display="flex";
-}
-
-function select(i){sel=i;}
-
-function place(el,slot){
-if(sel){
-fridge[slot]=sel;
-el.innerText=sel;
-}
-}
-
-// TABLETTE
-function openTablet(){
-document.getElementById("tablet").style.display="flex";
-let t=document.getElementById("tab");
-t.innerHTML="";
-let jours=["Lun","Mar","Mer","Jeu","Ven"];
-for(let i=0;i<5;i++){
-let tr=document.createElement("tr");
-for(let j=0;j<9;j++){
-let td=document.createElement("td");
-td.innerText=(j===0?jours[i]:(Math.random()*10+2).toFixed(1));
-tr.appendChild(td);
-}
-t.appendChild(tr);
-}
-}
-
-// VALIDATION
-function validate(){
-
-let ok =
-inv.includes("thermo") &&
-fridge.s1 && fridge.s2 && fridge.s3 &&
-document.getElementById("date").value!=="" &&
-fanv>0;
-
-document.getElementById("msg").innerText=
-ok?"MISSION VALIDÉE":"MISSION INCOMPLÈTE";
-
-document.getElementById("prof").style.display="flex";
+function closeM(){
+document.getElementById("zoom").style.display="none";
 }
 
 </script>
