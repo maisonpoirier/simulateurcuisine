@@ -1,78 +1,261 @@
-// SCENES RÉALISTES
-const scenes = {
-cuisine: "https://images.unsplash.com/photo-1600566752227-8f0b1d0c0c05?q=80&w=2000", // cuisine PRO inox
-bureau: "https://images.unsplash.com/photo-1581091870627-3c7f6f4b0a0b?q=80&w=2000", // bureau serré
-bar: "https://images.unsplash.com/photo-1578474846511-04ba529f0b88?q=80&w=2000"
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Simulation HACCP immersive</title>
+
+<style>
+body {margin:0; overflow:hidden; font-family:Arial;}
+
+#viewer {
+width:100%;
+height:600px;
+background-size:cover;
+background-repeat:no-repeat;
+background-position:center;
+cursor:grab;
+position:relative;
+}
+
+.nav {
+position:absolute;
+padding:10px;
+background:white;
+border-radius:10px;
+cursor:pointer;
+}
+
+#thermo {
+position:absolute;
+top:20px;
+right:20px;
+background:white;
+padding:10px;
+border-radius:50%;
+}
+
+#bulle {
+position:absolute;
+bottom:10px;
+left:10px;
+right:10px;
+background:#000c;
+color:white;
+padding:15px;
+border-radius:15px;
+max-height:160px;
+overflow:auto;
+font-size:14px;
+}
+
+#closeBtn {
+position:absolute;
+top:5px;
+right:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+#openBtn {
+position:absolute;
+bottom:10px;
+right:10px;
+background:white;
+padding:10px;
+border-radius:10px;
+cursor:pointer;
+display:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="viewer"></div>
+<div id="thermo">17°C</div>
+
+<div id="bulle">
+<div id="closeBtn">✖</div>
+<div id="texte"></div>
+</div>
+
+<div id="openBtn">📖 Consignes</div>
+
+<script>
+
+// TEXTE EXACT
+const scriptText = `Bonjour l'apprenti, tu es nouveau, pour te familiariser avec la cuisine tu vas être en charge des température.
+Tu devras aller dans le bureau et monter le chauffage à 21°C car Paul le responsable dit qu'il y fait trop froid , j'ai un thermomètre au mur à côté de la fenêtre tu pourras vérifier si Paul a raison.
+Prends le thermomètre manuel sur mon bureau et viens faire les relevés de températures des chambres froides, n'oublie pas de compléter la fiche de suivi sur la tablette.
+En passant tu mettras le four à préchauffer sur thermostat 6.
+Ensuite tu iras en salle il y a déjà du monde et il commence à faire chaud tu allumeras la clim à 26°C et puis tu mettras le ventilo sur grande vitesse.
+Bon eh bien tu as du travail , ne traîne pas la journée s'annonce chargée, et puis bien venu chez nous !!!`;
+
+document.getElementById("texte").innerText = scriptText;
+
+// BULLE
+const bulle = document.getElementById("bulle");
+const openBtn = document.getElementById("openBtn");
+
+document.getElementById("closeBtn").onclick = ()=>{
+bulle.style.display = "none";
+openBtn.style.display = "block";
 };
 
-// CUISINE PRO
+openBtn.onclick = ()=>{
+bulle.style.display = "block";
+openBtn.style.display = "none";
+};
+
+// SCENES (corrigées et STABLES)
+const scenes = {
+cuisine: "https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=1600",
+bureau: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600",
+bar: "https://images.unsplash.com/photo-1578474846511-04ba529f0b88?q=80&w=1600"
+};
+
+const viewer = document.getElementById("viewer");
+
+// CHARGEMENT SCENE
+function loadScene(scene){
+
+viewer.innerHTML = "";
+viewer.style.backgroundImage = `url(${scenes[scene]})`;
+
+// NAVIGATION
+if(scene==="cuisine"){
+addNav("➡ Bureau","10%","80%",()=>loadScene("bureau"));
+addNav("➡ Salle","80%","80%",()=>loadScene("bar"));
+addKitchen();
+}
+
+if(scene==="bureau"){
+addNav("➡ Cuisine","50%","80%",()=>loadScene("cuisine"));
+addBureau();
+}
+
+if(scene==="bar"){
+addNav("➡ Cuisine","50%","80%",()=>loadScene("cuisine"));
+addBar();
+}
+
+}
+
+// NAV
+function addNav(text,x,y,action){
+let el = document.createElement("div");
+el.className="nav";
+el.style.left=x;
+el.style.top=y;
+el.innerHTML=text;
+el.onclick=action;
+viewer.appendChild(el);
+}
+
+// CUISINE
 function addKitchen(){
 
-// FOUR PRO
 let four = document.createElement("div");
 four.className="nav";
-four.style.left="55%";
+four.style.left="60%";
 four.style.top="60%";
 four.innerHTML="🔥 Four OFF";
+
 four.onclick=()=>{
-four.innerHTML = four.innerHTML.includes("OFF") ? "🔥 Four ON (thermostat 6)" : "🔥 Four OFF";
+four.innerHTML = four.innerHTML.includes("OFF")
+? "🔥 Four ON (thermostat 6)"
+: "🔥 Four OFF";
 };
+
 viewer.appendChild(four);
 
 }
 
-// BUREAU RÉALISTE
+// BUREAU
 function addBureau(){
 
-// THERMOSTAT DIGITAL
+// THERMOSTAT
 let thermostat = document.createElement("div");
 thermostat.className="nav";
 thermostat.style.left="60%";
 thermostat.style.top="50%";
-thermostat.innerHTML="🌡️ 17°C";
+thermostat.innerHTML="🌡️ Thermostat 17°C";
+
 thermostat.onclick=()=>{
-thermostat.innerHTML="🌡️ 21°C";
+thermostat.innerHTML="🌡️ Thermostat 21°C";
 document.getElementById("thermo").innerHTML="21°C";
 };
+
 viewer.appendChild(thermostat);
 
-// THERMOMETRE ALCOOL VISUEL
-let thermoAlcool = document.createElement("div");
-thermoAlcool.style.position="absolute";
-thermoAlcool.style.left="75%";
-thermoAlcool.style.top="20%";
-thermoAlcool.style.width="10px";
-thermoAlcool.style.height="120px";
-thermoAlcool.style.background="white";
-thermoAlcool.style.border="2px solid black";
+// THERMOMETRE ALCOOL SIMPLE
+let thermo = document.createElement("div");
+thermo.style.position="absolute";
+thermo.style.left="75%";
+thermo.style.top="20%";
+thermo.style.width="12px";
+thermo.style.height="120px";
+thermo.style.border="2px solid black";
+thermo.style.background="white";
 
-// MENISQUE à 17°C
 let liquide = document.createElement("div");
 liquide.style.position="absolute";
 liquide.style.bottom="0";
 liquide.style.width="100%";
-liquide.style.height="40%"; // correspond à 17°C
+liquide.style.height="40%"; // 17°C
 liquide.style.background="red";
 
-thermoAlcool.appendChild(liquide);
-viewer.appendChild(thermoAlcool);
+thermo.appendChild(liquide);
+viewer.appendChild(thermo);
 
 // BASILIC
 let basilic = document.createElement("div");
 basilic.className="nav";
 basilic.style.left="70%";
-basilic.style.top="35%";
+basilic.style.top="40%";
 basilic.innerHTML="🌿 Basilic";
 viewer.appendChild(basilic);
 
-// RADIATEUR
-let radiateur = document.createElement("div");
-radiateur.className="nav";
-radiateur.style.left="60%";
-radiateur.style.top="70%";
-radiateur.innerHTML="🔥 Radiateur";
-viewer.appendChild(radiateur);
+}
+
+// BAR
+function addBar(){
+
+let clim = document.createElement("div");
+clim.className="nav";
+clim.style.left="40%";
+clim.style.top="50%";
+clim.innerHTML="❄️ Clim OFF";
+
+clim.onclick=()=>{
+clim.innerHTML="❄️ Clim 26°C";
+};
+
+viewer.appendChild(clim);
+
+let ventilo = document.createElement("div");
+ventilo.className="nav";
+ventilo.style.left="60%";
+ventilo.style.top="60%";
+ventilo.innerHTML="🌀 Ventilo OFF";
+
+ventilo.onclick=()=>{
+ventilo.innerHTML="🌀 Ventilo MAX";
+};
+
+viewer.appendChild(ventilo);
 
 }
+
+// LANCEMENT
+loadScene("cuisine");
+
+</script>
+
+</body>
+</html>
 
 
