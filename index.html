@@ -1,132 +1,18 @@
-<!DOCTYPE html>
-
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Simulation HACCP immersive</title>
-
-<style>
-body {margin:0; overflow:hidden; font-family:Arial;}
-
-#viewer {
-width:100%;
-height:600px;
-background-size:cover;
-background-repeat:repeat-x;
-background-position:0px center;
-cursor:grab;
-position:relative;
-}
-
-.nav {
-position:absolute;
-padding:10px;
-background:white;
-border-radius:10px;
-cursor:pointer;
-}
-
-#thermo {
-position:absolute;
-top:20px;
-right:20px;
-background:white;
-padding:10px;
-border-radius:50%;
-}
-
-#bulle {
-position:absolute;
-bottom:10px;
-left:10px;
-right:10px;
-background:#000c;
-color:white;
-padding:15px;
-border-radius:15px;
-max-height:160px;
-overflow:auto;
-font-size:14px;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div id="viewer"></div>
-<div id="thermo">20°C</div>
-<div id="bulle"></div>
-
-<script>
-
-// 👉 TON TEXTE EXACT (NON MODIFIÉ)
-const scriptText = `Bonjour l'apprenti, tu es nouveau, pour te familiariser avec la cuisine tu vas être en charge des température.
-Tu devras aller dans le bureau et monter le chauffage à 21°C car Paul le responsable dit qu'il y fait trop froid, j'ai un thermomètre au mur à côté de la fenêtre tu pourras vérifier si Paul a raison.
-Prends le thermomètre manuel sur mon bureau et viens faire les relevés de températures des chambres froides, n'oublie pas de compléter la fiche de suivi sur la tablette.
-En passant tu mettras le four à préchauffer sur thermostat 6.
-Ensuite tu iras en salle il y a déjà du monde et il commence à faire chaud tu allumeras la clim à 26°C et puis tu mettras le ventilo sur grande vitesse.
-Bon eh bien tu as du travail, ne traîne pas la journée s'annonce chargée, et puis bien venu chez nous !!!`;
-
-// affichage texte complet
-document.getElementById("bulle").innerText = scriptText;
-
-// SCENES
+// SCENES RÉALISTES
 const scenes = {
-cuisine: "https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=2000",
-bureau: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2000",
+cuisine: "https://images.unsplash.com/photo-1600566752227-8f0b1d0c0c05?q=80&w=2000", // cuisine PRO inox
+bureau: "https://images.unsplash.com/photo-1581091870627-3c7f6f4b0a0b?q=80&w=2000", // bureau serré
 bar: "https://images.unsplash.com/photo-1578474846511-04ba529f0b88?q=80&w=2000"
 };
 
-let current = "cuisine";
-let pos = 0;
-
-const viewer = document.getElementById("viewer");
-
-function loadScene(scene){
-
-current = scene;
-viewer.style.backgroundImage = `url(${scenes[scene]})`;
-viewer.innerHTML = "";
-
-// NAVIGATION
-if(scene==="cuisine"){
-addNav("➡ Bureau", "10%", "70%", ()=>loadScene("bureau"));
-addNav("➡ Salle", "80%", "70%", ()=>loadScene("bar"));
-addKitchen();
-}
-
-if(scene==="bureau"){
-addNav("➡ Cuisine", "50%", "70%", ()=>loadScene("cuisine"));
-addBureau();
-}
-
-if(scene==="bar"){
-addNav("➡ Cuisine", "50%", "70%", ()=>loadScene("cuisine"));
-addBar();
-}
-
-}
-
-// NAV
-function addNav(text,x,y,action){
-let el = document.createElement("div");
-el.className="nav";
-el.style.left=x;
-el.style.top=y;
-el.innerHTML=text;
-el.onclick=action;
-viewer.appendChild(el);
-}
-
-// CUISINE
+// CUISINE PRO
 function addKitchen(){
 
+// FOUR PRO
 let four = document.createElement("div");
 four.className="nav";
-four.style.left="500px";
-four.style.top="300px";
+four.style.left="55%";
+four.style.top="60%";
 four.innerHTML="🔥 Four OFF";
 four.onclick=()=>{
 four.innerHTML = four.innerHTML.includes("OFF") ? "🔥 Four ON (thermostat 6)" : "🔥 Four OFF";
@@ -135,71 +21,58 @@ viewer.appendChild(four);
 
 }
 
-// BUREAU
+// BUREAU RÉALISTE
 function addBureau(){
 
-let chauffage = document.createElement("div");
-chauffage.className="nav";
-chauffage.style.left="300px";
-chauffage.style.top="300px";
-chauffage.innerHTML="🔥 Chauffage 20°C";
-chauffage.onclick=()=>{
-chauffage.innerHTML="🔥 Chauffage 21°C";
+// THERMOSTAT DIGITAL
+let thermostat = document.createElement("div");
+thermostat.className="nav";
+thermostat.style.left="60%";
+thermostat.style.top="50%";
+thermostat.innerHTML="🌡️ 17°C";
+thermostat.onclick=()=>{
+thermostat.innerHTML="🌡️ 21°C";
 document.getElementById("thermo").innerHTML="21°C";
 };
-viewer.appendChild(chauffage);
+viewer.appendChild(thermostat);
+
+// THERMOMETRE ALCOOL VISUEL
+let thermoAlcool = document.createElement("div");
+thermoAlcool.style.position="absolute";
+thermoAlcool.style.left="75%";
+thermoAlcool.style.top="20%";
+thermoAlcool.style.width="10px";
+thermoAlcool.style.height="120px";
+thermoAlcool.style.background="white";
+thermoAlcool.style.border="2px solid black";
+
+// MENISQUE à 17°C
+let liquide = document.createElement("div");
+liquide.style.position="absolute";
+liquide.style.bottom="0";
+liquide.style.width="100%";
+liquide.style.height="40%"; // correspond à 17°C
+liquide.style.background="red";
+
+thermoAlcool.appendChild(liquide);
+viewer.appendChild(thermoAlcool);
+
+// BASILIC
+let basilic = document.createElement("div");
+basilic.className="nav";
+basilic.style.left="70%";
+basilic.style.top="35%";
+basilic.innerHTML="🌿 Basilic";
+viewer.appendChild(basilic);
+
+// RADIATEUR
+let radiateur = document.createElement("div");
+radiateur.className="nav";
+radiateur.style.left="60%";
+radiateur.style.top="70%";
+radiateur.innerHTML="🔥 Radiateur";
+viewer.appendChild(radiateur);
 
 }
 
-// SALLE / BAR
-function addBar(){
-
-let clim = document.createElement("div");
-clim.className="nav";
-clim.style.left="300px";
-clim.style.top="300px";
-clim.innerHTML="❄️ Clim OFF";
-clim.onclick=()=>{
-clim.innerHTML="❄️ Clim 26°C";
-};
-viewer.appendChild(clim);
-
-let ventilo = document.createElement("div");
-ventilo.className="nav";
-ventilo.style.left="500px";
-ventilo.style.top="350px";
-ventilo.innerHTML="🌀 Ventilo OFF";
-ventilo.onclick=()=>{
-ventilo.innerHTML="🌀 Ventilo MAX";
-};
-viewer.appendChild(ventilo);
-
-}
-
-// DEPLACEMENT
-let isDown=false, startX=0;
-
-viewer.addEventListener("mousedown", e=>{
-isDown=true;
-startX=e.clientX;
-});
-
-viewer.addEventListener("mouseup", ()=>isDown=false);
-
-viewer.addEventListener("mousemove", e=>{
-if(!isDown) return;
-
-pos += (e.clientX - startX);
-pos = Math.max(-1000, Math.min(1000, pos));
-
-viewer.style.backgroundPosition = pos+"px center";
-startX=e.clientX;
-});
-
-loadScene("cuisine");
-
-</script>
-
-</body>
-</html>
 
