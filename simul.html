@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Simulation HACCP</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+overflow:hidden;
+background:#000;
+}
+
+/* ===== SCÈNES ===== */
+.scene{
+position:absolute;
+width:100%;
+height:100%;
+display:none;
+color:white;
+}
+
+.active{display:block}
+
+/* fonds stylisés (pro, lisibles, non dépendants d’images) */
+#cuisine{background:linear-gradient(135deg,#3a3a3a,#1c1c1c);}
+#bureau{background:linear-gradient(135deg,#2e4b3f,#1a2b24);}
+#bar{background:linear-gradient(135deg,#5a3a2a,#2a1a14);}
+
+h1{
+text-align:center;
+margin-top:15px;
+}
+
+/* ===== OBJETS ===== */
+.obj{
+position:absolute;
+background:rgba(255,255,255,0.9);
+color:black;
+padding:8px;
+border-radius:6px;
+cursor:pointer;
+font-size:14px;
+user-select:none;
+}
+
+.obj:hover{
+background:yellow;
+}
+
+/* ===== NAV ===== */
+#nav{
+position:fixed;
+bottom:10px;
+left:50%;
+transform:translateX(-50%);
+}
+
+button{
+padding:10px;
+margin:5px;
+cursor:pointer;
+}
+
+/* ===== BULLE ===== */
+#bubble{
+position:fixed;
+top:10px;
+left:10px;
+width:420px;
+background:white;
+color:black;
+padding:12px;
+border-radius:10px;
+z-index:10;
+}
+
+#close{
+float:right;
+cursor:pointer;
+font-weight:bold;
+}
+
+/* ===== TABLETTE ===== */
+#tablet{
+position:fixed;
+top:15%;
+left:25%;
+width:50%;
+height:60%;
+background:white;
+color:black;
+display:none;
+padding:10px;
+overflow:auto;
+z-index:20;
+}
+
+/* GRAPH */
+canvas{
+border:1px solid #333;
+margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- BULLE -->
+<div id="bubble">
+<span id="close" onclick="closeBubble()">✖</span>
+<p>
+Bonjour l'apprenti, tu es nouveau, pour te familiariser avec la cuisine tu vas être en charge des température. Tu devras aller dans le bureau et monter le chauffage à 21°C. Vérifie le thermomètre au mur. Prends la sonde en cuisine et relève les températures des chambres froides. Complète la tablette. Mets le four à thermostat 6. En salle, règle la clim à 26°C et le ventilateur à vitesse maximale.
+</p>
+</div>
+
+<!-- CUISINE -->
+<div id="cuisine" class="scene active">
+<h1>CUISINE PROFESSIONNELLE</h1>
+
+<div class="obj" style="top:60%;left:20%" onclick="takeTemp()">Sonde température</div>
+<div class="obj" style="top:55%;left:70%" onclick="setOven()">Four (thermostat)</div>
+<div class="obj" style="top:25%;left:45%" onclick="openTablet()">Tablette HACCP</div>
+</div>
+
+<!-- BUREAU -->
+<div id="bureau" class="scene">
+<h1>BUREAU</h1>
+
+<div class="obj" style="top:55%;left:30%" onclick="setHeat()">Thermostat chauffage</div>
+<div class="obj" style="top:30%;left:65%" onclick="thermo()">Thermomètre alcool</div>
+</div>
+
+<!-- BAR -->
+<div id="bar" class="scene">
+<h1>SALLE / BAR</h1>
+
+<div class="obj" style="top:30%;left:40%" onclick="setClim()">Climatisation</div>
+<div class="obj" style="top:60%;left:60%" onclick="setFan()">Ventilateur</div>
+</div>
+
+<!-- TABLETTE -->
+<div id="tablet">
+<h3>Suivi des températures</h3>
+
+<table border="1" width="100%">
+<tr><th>Jour</th><th>CF+</th><th>CF-</th></tr>
+<tr><td>Lundi</td><td>4</td><td>-18</td></tr>
+<tr><td>Mardi</td><td>3</td><td>-17</td></tr>
+<tr><td>Mercredi</td><td>5</td><td>-19</td></tr>
+<tr><td>Jeudi</td><td>4</td><td>-18</td></tr>
+<tr><td>Vendredi</td><td id="cfp">?</td><td id="cfn">?</td></tr>
+</table>
+
+<button onclick="graph()">Afficher graphique</button>
+<canvas id="canvas" width="400" height="200"></canvas>
+
+<br><button onclick="closeTablet()">Fermer</button>
+</div>
+
+<!-- NAV -->
+<div id="nav">
+<button onclick="go('cuisine')">Cuisine</button>
+<button onclick="go('bureau')">Bureau</button>
+<button onclick="go('bar')">Salle</button>
+</div>
+
+<script>
+
+/* NAV */
+function go(id){
+document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+}
+
+/* BULLE */
+function closeBubble(){
+document.getElementById("bubble").style.display="none";
+}
+
+/* ACTIONS */
+function setHeat(){
+let v=prompt("Régler à 21°C ?");
+alert(v==21 ? "✔ OK" : "❌ mauvais réglage");
+}
+
+function thermo(){
+alert("Lecture : 17°C");
+}
+
+function setOven(){
+alert("Four réglé thermostat 6");
+}
+
+function setClim(){
+alert("Clim réglée à 26°C");
+}
+
+function setFan(){
+alert("Ventilateur vitesse max");
+}
+
+function takeTemp(){
+document.getElementById("cfp").innerText="4";
+document.getElementById("cfn").innerText="-18";
+alert("Températures enregistrées");
+}
+
+function openTablet(){
+document.getElementById("tablet").style.display="block";
+}
+
+function closeTablet(){
+document.getElementById("tablet").style.display="none";
+}
+
+/* GRAPH */
+function graph(){
+let c=document.getElementById("canvas");
+let ctx=c.getContext("2d");
+
+ctx.clearRect(0,0,400,200);
+
+ctx.beginPath();
+ctx.moveTo(0,150);
+ctx.lineTo(100,140);
+ctx.lineTo(200,130);
+ctx.lineTo(300,140);
+ctx.strokeStyle="red";
+ctx.stroke();
+}
+
+</script>
+
+</body>
+</html>
